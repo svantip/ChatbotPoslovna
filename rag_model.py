@@ -66,7 +66,7 @@ class RAGModel:
             n_results=top_k
         )
         
-        # Step 2: Extract context and sources
+        # Step 3: Extract context and sources
         context_parts = []
         sources = []
         
