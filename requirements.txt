@@ -2,16 +2,13 @@
 fastapi==0.115.12
 uvicorn==0.34.0
 python-dotenv==1.0.1
+streamlit==1.41.1
 
 # PDF processing
 pypdf==5.1.0
-reportlab==4.2.5
 
-# Google Gemini
+# Google Gemini (for response generation)
 google-generativeai==0.8.3
 
-# Vector database
+# Vector database (includes embeddings)
 chromadb==0.5.23
-
-# Additional utilities
-pydantic==2.10.5

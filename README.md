@@ -1,23 +1,22 @@
 # RAG Chatbot - Poslovni Asistent
 
-RAG (Retrieval-Augmented Generation) chatbot template koji koristi Google Gemini za inteligentno odgovaranje na pitanja iz PDF dokumenata na hrvatskom jeziku.
+RAG (Retrieval-Augmented Generation) chatbot koji koristi Google Gemini za generiranje odgovora. Izuzetno jednostavna arhitektura s samo 4 skripta.
 
 ## 📋 Funkcionalnosti
 
-- ✅ Učitavanje lokalnih PDF dokumenata
-- ✅ Ekstrakcija teksta iz PDF-ova
-- ✅ Automatsko dijeljenje teksta u chunk-ove s preklapanjem
-- ✅ Generiranje embedding vektora pomoću Gemini API-ja
-- ✅ Spremanje u ChromaDB vektorsku bazu
-- ✅ REST API chat endpoint za postavljanje pitanja
-- ✅ Dohvaćanje najrelevantnijih chunk-ova na osnovu upita
-- ✅ Generiranje odgovora s kontekstom pomoću Gemini-ja
-- ✅ Vraćanje strukturiranog odgovora s popisom izvora (PDF + stranica)
-- ✅ Potpuna podrška za hrvatski jezik
+- ✅ Učitavanje PDF dokumenata i ekstrakcija teksta
+- ✅ Automatsko chunking s preklapanjem
+- ✅ Gemini embeddings (text-embedding-004)
+- ✅ ChromaDB vektorska baza
+- ✅ Similarity search za pronalaženje relevantnog konteksta
+- ✅ Gemini za generiranje odgovora na hrvatskom
+- ✅ REST API endpoint
+- ✅ Streamlit UI za chat
+- ✅ Praćenje izvora (PDF + stranica)
 
 ## 🚀 Brzo pokretanje
 
-### 1. Instalacija ovisnosti
+### 1. Instalacija
 
 ```bash
 pip install -r requirements.txt
@@ -25,257 +24,120 @@ pip install -r requirements.txt
 
 ### 2. Konfiguracija
 
-Kopirajte `.env.example` u `.env` i postavite svoj Gemini API ključ:
-
 ```bash
 cp .env.example .env
+# Uredite .env i postavite GEMINI_API_KEY
 ```
 
-Uredite `.env` datoteku:
-
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-**Kako dobiti Gemini API ključ:**
-1. Posjetite [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Prijavite se s Google računom
-3. Generirajte novi API ključ
-4. Kopirajte ključ u `.env` datoteku
-
-### 3. Dodajte PDF dokumente
-
-Stavite svoje PDF dokumente u `pdfs/` direktorij:
+### 3. Indeksiranje dokumenata
 
 ```bash
-mkdir -p pdfs
-# Kopirajte svoje PDF dokumente u pdfs/ direktorij
+python setup.py
 ```
 
-### 4. Indeksirajte dokumente
+### 4. Pokrenite aplikaciju
 
+**Opcija A - Streamlit UI:**
 ```bash
-python indexer.py
+streamlit run app.py
 ```
 
-### 5. Pokrenite server
-
+**Opcija B - API server:**
 ```bash
-python main.py
+python api.py
+# ili
+uvicorn api:app --reload
 ```
 
-Ili s uvicornom:
+API dokumentacija: http://localhost:8000/docs
 
-```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
+## 📖 Korištenje
 
-Server će biti dostupan na: http://localhost:8000
+### Streamlit UI
 
-## 📖 Korištenje API-ja
+Najjednostavniji način - otvorite browser na http://localhost:8501 i chatajte!
 
-### Swagger UI dokumentacija
-
-Otvorite http://localhost:8000/docs za interaktivnu API dokumentaciju.
-
-### Osnovni primjeri
-
-#### 1. Provjera statusa
-
-```bash
-curl http://localhost:8000/status
-```
-
-#### 2. Indeksiranje dokumenata
-
-```bash
-curl -X POST http://localhost:8000/index \
-  -H "Content-Type: application/json" \
-  -d '{"clear_existing": true}'
-```
-
-#### 3. Postavljanje pitanja
+### REST API
 
 ```bash
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "Koja je tema ovog dokumenta?",
+    "prompt": "Koja je adresa tvrtke?",
     "top_k": 3
   }'
 ```
 
 Odgovor:
-
 ```json
 {
-  "response": "Odgovor chatbota na hrvatskom jeziku...",
+  "response": "Adresa tvrtke je...",
   "sources": [
-    {
-      "chunk_id": 1,
-      "filename": "company_info.pdf",
-      "page_number": 1
-    },
-    {
-      "chunk_id": 2,
-      "filename": "products_services.pdf",
-      "page_number": 1
-    }
+    {"filename": "company_info.pdf", "page": 1}
   ]
 }
 ```
 
-### Testiranje s primjer dokumentima
+## 🔧 Konfiguracija (.env)
 
-Repozitorij uključuje 3 primjera PDF dokumenata u `pdfs/` direktoriju:
-- `company_info.pdf` - Informacije o tvrtki
-- `products_services.pdf` - Proizvodi i usluge
-- `policies.pdf` - Pravila i politike
-
-Možete testirati sustav s primjerima pitanja:
-
-```bash
-# Pitanje o tvrtki
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"query": "Koja je adresa tvrtke?"}'
-
-# Pitanje o proizvodima
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"query": "Koliko košta ERP sustav?"}'
-
-# Pitanje o politikama
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"query": "Koliko dana godišnjeg odmora imaju zaposlenici?"}'
-```
-
-## 🔧 Konfiguracija
-
-Sve postavke se mogu prilagoditi putem `.env` datoteke:
-
-| Parametar | Opis | Zadana vrijednost |
-|-----------|------|-------------------|
+| Parametar | Opis | Default |
+|-----------|------|---------|
 | `GEMINI_API_KEY` | Google Gemini API ključ | - |
-| `GEMINI_MODEL` | Gemini model za generiranje odgovora | `gemini-1.5-flash` |
-| `GEMINI_EMBEDDING_MODEL` | Gemini model za embeddings | `models/text-embedding-004` |
-| `CHROMA_DB_PATH` | Putanja do ChromaDB baze | `./chroma_db` |
-| `PDF_FOLDER_PATH` | Putanja do PDF dokumenata | `./pdfs` |
-| `CHUNK_SIZE` | Veličina chunka u znakovima | `1000` |
-| `CHUNK_OVERLAP` | Preklapanje između chunkova | `200` |
-| `TOP_K` | Broj chunk-ova za dohvaćanje | `3` |
+| `GEMINI_MODEL` | Gemini model | `gemini-1.5-flash` |
+| `PDF_FOLDER_PATH` | Putanja do PDFova | `./pdfs` |
+| `CHROMA_DB_PATH` | Putanja do DB | `./chroma_db` |
+| `CHUNK_SIZE` | Veličina chunka | `1000` |
+| `CHUNK_OVERLAP` | Preklapanje | `200` |
+| `TOP_K` | Broj rezultata | `3` |
 
-### Dostupni Gemini modeli
+**Dobivanje API ključa:** https://makersuite.google.com/app/apikey
 
-**Za generiranje odgovora (GEMINI_MODEL):**
-- `gemini-1.5-flash` - Brži, ekonomičniji model (preporučeno)
-- `gemini-1.5-pro` - Snažniji model za kompleksnije zadatke
-- `gemini-1.0-pro` - Starija verzija
-
-**Za embeddings (GEMINI_EMBEDDING_MODEL):**
-- `models/text-embedding-004` - Najnoviji embedding model (768 dimenzija) - preporučeno
-- `models/embedding-001` - Stariji model
-
-## 🏗️ Arhitektura
-
-```
-┌─────────────┐
-│   PDF-ovi   │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────┐
-│   PDF Loader    │  ← Učitava PDF-ove i ekstraktira tekst
-└──────┬──────────┘
-       │
-       ▼
-┌─────────────────┐
-│  Text Chunker   │  ← Dijeli tekst u chunk-ove
-└──────┬──────────┘
-       │
-       ▼
-┌─────────────────┐
-│   Embeddings    │  ← Gemini API (text-embedding-004)
-└──────┬──────────┘
-       │
-       ▼
-┌─────────────────┐
-│  Vector DB      │  ← ChromaDB (cosine similarity)
-│  (ChromaDB)     │
-└──────┬──────────┘
-       │
-       │  Korisničko pitanje
-       ▼
-┌─────────────────┐
-│  RAG Chatbot    │  ← Dohvaća kontekst + Gemini generira odgovor
-└──────┬──────────┘
-       │
-       ▼
-┌─────────────────┐
-│  Chat Endpoint  │  ← FastAPI REST API
-└─────────────────┘
-```
-
-## 📁 Struktura projekta
+## 🔧 Struktura projekta
 
 ```
 ChatbotPoslovna/
-├── main.py              # FastAPI aplikacija i endpointi
-├── chatbot.py           # RAG chatbot logika
-├── indexer.py           # Indeksiranje dokumenata
-├── pdf_loader.py        # Učitavanje PDF-ova
-├── text_chunker.py      # Dijeljenje teksta u chunk-ove
-├── embeddings.py        # Generiranje embedding vektora
-├── vector_db.py         # ChromaDB operacije
-├── config.py            # Konfiguracija
-├── requirements.txt     # Python ovisnosti
-├── .env.example         # Primjer konfiguracije
-├── pdfs/                # Direktorij za PDF dokumente
-└── chroma_db/           # ChromaDB baza (generira se automatski)
+├── setup.py          # Script 1: Parse PDFs, chunk, embed, store
+├── rag_model.py      # Script 2: RAG logic (similarity search + Gemini)
+├── api.py            # Script 3: FastAPI REST endpoint
+├── app.py            # Script 4: Streamlit UI
+├── requirements.txt  # Dependencies
+├── .env.example      # Environment template
+├── pdfs/             # Your PDF documents (3 samples included)
+└── chroma_db/        # Vector database (auto-generated)
 ```
+
+## ⚙️ Kako radi
+
+1. **setup.py** - Učitava PDFove, dijeli na chunkove, embeduje i sprema u ChromaDB
+2. **rag_model.py** - Provodi similarity search i generira odgovore s Geminijem
+3. **api.py** - Izlaže `respond()` funkciju preko POST `/chat` endpointa
+4. **app.py** - Streamlit sučelje koje koristi RAGModel
 
 ## 🛠️ Razvoj
 
-### Testiranje u Pythonu
+### Testiranje RAG modela
 
 ```python
-from chatbot import RAGChatbot
+from rag_model import RAGModel
 
-# Inicijalizacija chatbota
-chatbot = RAGChatbot()
-
-# Postavi pitanje
-result = chatbot.chat("Što je navedeno o...?", top_k=3)
-
+rag = RAGModel()
+result = rag.respond("Koja je adresa tvrtke?")
 print(result["response"])
-for source in result["sources"]:
-    print(f"Izvor: {source['filename']}, stranica {source['page_number']}")
 ```
 
 ### Ponovno indeksiranje
 
-Za ponovno indeksiranje dokumenata s brisanjem postojećih:
-
-```python
-from indexer import DocumentIndexer
-
-indexer = DocumentIndexer()
-indexer.index_documents(clear_existing=True)
+```bash
+python setup.py  # Automatski briše staru bazu i kreira novu
 ```
 
 ## 📝 Napomene
 
-- **Gemini API limiti**: Besplatna razina ima ograničenja zahtjeva po minuti
-- **Embedding model**: Koristi se `text-embedding-004` (768 dimenzija)
-- **LLM model**: Koristi se `gemini-1.5-flash` za generiranje odgovora
-- **Vektorska baza**: ChromaDB s cosine similarity
-- **Jezik**: Odgovori su optimizirani za hrvatski jezik
+- **Gemini**: Koristi se za embeddings (text-embedding-004) i generiranje odgovora (gemini-1.5-flash)
+- **Bez kompleksnosti**: Samo 4 skripta, jednostavna arhitektura
+- **Hrvatski**: Odgovori optimizirani za hrvatski jezik
+- **Primjeri**: 3 PDF dokumenta uključena (tvrtka, proizvodi, politike)
 
 ## 🤝 Doprinos
 
-Slobodno prijavite bugove ili predložite nova poboljšanja!
-
-## 📄 Licenca
-
-MIT License
+Slobodno prijavite bugove ili predložite poboljšanja!
