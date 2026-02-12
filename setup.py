@@ -5,6 +5,7 @@ Run this once to index all your PDF documents.
 import os
 from pypdf import PdfReader
 import chromadb
+from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -15,6 +16,7 @@ PDF_FOLDER = os.getenv("PDF_FOLDER_PATH", "./pdfs")
 CHROMA_DB_PATH = os.getenv("CHROMA_DB_PATH", "./chroma_db")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1000"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "paraphrase-multilingual-MiniLM-L12-v2")
 
 
 def load_pdfs(pdf_folder):
@@ -72,17 +74,11 @@ def chunk_text(documents, chunk_size, chunk_overlap):
 
 
 def store_in_database(chunks, db_path):
-    """Store chunks in ChromaDB with embeddings from Gemini."""
-    import google.generativeai as genai
-    
-    # Configure Gemini
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        print("⚠️  GEMINI_API_KEY not set - cannot generate embeddings")
-        print("   Please set GEMINI_API_KEY in .env file and run again")
-        return
-    
-    genai.configure(api_key=api_key)
+    """Store chunks in ChromaDB with embeddings from multilingual model."""
+    # Load embedding model
+    print(f"Loading embedding model: {EMBEDDING_MODEL}")
+    embedding_model = SentenceTransformer(EMBEDDING_MODEL)
+    print("✓ Embedding model loaded")
     
     # Initialize ChromaDB client
     client = chromadb.PersistentClient(path=db_path)
@@ -104,27 +100,17 @@ def store_in_database(chunks, db_path):
     metadatas = [{"filename": chunk["filename"], "page": chunk["page"]} for chunk in chunks]
     ids = [f"chunk_{i}" for i in range(len(chunks))}
     
-    # Generate embeddings with Gemini
-    print("Generating embeddings with Gemini...")
-    embeddings = []
-    for i, text in enumerate(texts):
-        if i % 5 == 0:
-            print(f"  Progress: {i+1}/{len(texts)}")
-        try:
-            result = genai.embed_content(
-                model="models/text-embedding-004",
-                content=text
-            )
-            embeddings.append(result['embedding'])
-        except Exception as e:
-            print(f"Error generating embedding for chunk {i}: {e}")
-            # Use a zero vector as fallback
-            embeddings.append([0.0] * 768)
+    # Generate embeddings with multilingual model
+    print(f"Generating embeddings with {EMBEDDING_MODEL}...")
+    embeddings = embedding_model.encode(texts, show_progress_bar=True, convert_to_numpy=True)
+    
+    # Convert to list format for ChromaDB
+    embeddings_list = [emb.tolist() for emb in embeddings]
     
     # Add to collection with embeddings
     collection.add(
         documents=texts,
-        embeddings=embeddings,
+        embeddings=embeddings_list,
         metadatas=metadatas,
         ids=ids
     )
@@ -167,7 +153,7 @@ def main():
     print("✅ Setup complete! Database is ready.")
     print("=" * 60)
     print("\nNext steps:")
-    print("  1. Set GEMINI_API_KEY in .env file")
+    print("  1. Set GEMINI_API_KEY in .env file (for response generation)")
     print("  2. Run: python api.py (for API server)")
     print("  3. Run: streamlit run app.py (for UI)")
 

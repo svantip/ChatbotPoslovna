@@ -13,7 +13,7 @@ PDFs (./pdfs/)
 ┌─────────────┐
 │  setup.py   │  1. Učitaj PDFove
 │             │  2. Chunk na dijelove (1000 chars, overlap 200)
-│             │  3. Gemini embeddings (text-embedding-004)
+│             │  3. Multilingual embeddings (Sentence Transformers)
 │             │  4. Spremi u ChromaDB
 └─────┬───────┘
       │
@@ -32,7 +32,7 @@ User pitanje
     │
     ▼
 ┌──────────────┐
-│ rag_model.py │  1. Embedding pitanja (Gemini)
+│ rag_model.py │  1. Embedding pitanja (Sentence Transformers)
 │              │  2. Similarity search (ChromaDB, top_k=3)
 │              │  3. Sastavi kontekst
 │              │  4. Prompt + kontekst → Gemini
@@ -56,17 +56,17 @@ User pitanje
 - **Uloga**: Priprema podatke (run jednom ili pri promjeni PDFova)
 - **Input**: PDF datoteke iz `./pdfs/`
 - **Output**: Popunjena ChromaDB baza
-- **Koristi**: pypdf, google-generativeai, chromadb
+- **Koristi**: pypdf, sentence-transformers, chromadb
 
 ### 2. rag_model.py
 - **Uloga**: Srce RAG logike
 - **Metoda**: `respond(user_query) → {response, sources}`
 - **Proces**:
-  1. Embedduje upit (Gemini)
+  1. Embedduje upit (Sentence Transformers)
   2. Traži slične chunk-ove (ChromaDB)
   3. Sastavlja prompt s kontekstom
   4. Generira odgovor (Gemini)
-- **Koristi**: google-generativeai, chromadb
+- **Koristi**: sentence-transformers, google-generativeai, chromadb
 
 ### 3. api.py
 - **Uloga**: REST API sučelje
@@ -88,7 +88,8 @@ User pitanje
 
 | Tehnologija | Svrha |
 |-------------|-------|
-| **Gemini API** | Embeddings + generiranje odgovora |
+| **Sentence Transformers** | Multilingvalni embeddings (50+ jezika) |
+| **Gemini API** | Generiranje odgovora (LLM) |
 | **ChromaDB** | Vektorska baza za similarity search |
 | **pypdf** | Ekstrakcija teksta iz PDFova |
 | **FastAPI** | REST API server |

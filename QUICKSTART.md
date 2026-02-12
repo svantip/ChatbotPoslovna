@@ -67,8 +67,9 @@ http://localhost:8000/docs
 ## 📦 Što je uključeno?
 
 - 3 primjera PDF dokumenata
-- ChromaDB za vektore (automatski embeddings)
-- Gemini za odgovore
+- ChromaDB za vektore
+- Sentence Transformers za embeddings (multilingvalni)
+- Gemini za generiranje odgovora
 - API + Streamlit UI
 
 ## 🆘 Pomoć

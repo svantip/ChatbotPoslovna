@@ -5,6 +5,7 @@ This holds the core RAG logic.
 import os
 import chromadb
 import google.generativeai as genai
+from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -13,6 +14,7 @@ load_dotenv()
 # Configuration
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "paraphrase-multilingual-MiniLM-L12-v2")
 CHROMA_DB_PATH = os.getenv("CHROMA_DB_PATH", "./chroma_db")
 TOP_K = int(os.getenv("TOP_K", "3"))
 
@@ -22,12 +24,16 @@ class RAGModel:
     
     def __init__(self):
         """Initialize the RAG model."""
-        # Initialize Gemini
+        # Initialize Gemini (for response generation only)
         if not GEMINI_API_KEY:
             raise ValueError("❌ GEMINI_API_KEY is not set in .env file")
         
         genai.configure(api_key=GEMINI_API_KEY)
         self.model = genai.GenerativeModel(GEMINI_MODEL)
+        
+        # Load embedding model (multilingual)
+        print(f"Loading embedding model: {EMBEDDING_MODEL}")
+        self.embedding_model = SentenceTransformer(EMBEDDING_MODEL)
         
         # Initialize ChromaDB
         client = chromadb.PersistentClient(path=CHROMA_DB_PATH)
@@ -37,7 +43,8 @@ class RAGModel:
         )
         
         print(f"✓ RAG Model initialized")
-        print(f"  - Gemini Model: {GEMINI_MODEL}")
+        print(f"  - Gemini Model (response): {GEMINI_MODEL}")
+        print(f"  - Embedding Model: {EMBEDDING_MODEL}")
         print(f"  - Documents in DB: {self.collection.count()}")
     
     def respond(self, user_query, top_k=None):
@@ -54,11 +61,8 @@ class RAGModel:
         if top_k is None:
             top_k = TOP_K
         
-        # Step 1: Generate query embedding with Gemini
-        query_embedding = genai.embed_content(
-            model="models/text-embedding-004",
-            content=user_query
-        )['embedding']
+        # Step 1: Generate query embedding with multilingual model
+        query_embedding = self.embedding_model.encode(user_query, convert_to_numpy=True).tolist()
         
         # Step 2: Similarity search in database
         results = self.collection.query(
@@ -89,7 +93,7 @@ class RAGModel:
         
         context = "\n\n".join(context_parts)
         
-        # Step 3: Create prompt for Gemini
+        # Step 4: Create prompt for Gemini
         prompt = f"""Ti si pomoćnik koji odgovara na pitanja na temelju dostavljenog konteksta.
 
 Kontekst iz dokumenata:
@@ -101,7 +105,7 @@ Molim te odgovori na pitanje koristeći informacije iz konteksta. Odgovori na hr
 Ako informacija nije u kontekstu, jasno to naznači.
 """
         
-        # Step 4: Generate response with Gemini
+        # Step 5: Generate response with Gemini
         try:
             response = self.model.generate_content(prompt)
             return {

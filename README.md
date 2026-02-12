@@ -1,12 +1,12 @@
 # RAG Chatbot - Poslovni Asistent
 
-RAG (Retrieval-Augmented Generation) chatbot koji koristi Google Gemini za generiranje odgovora. Izuzetno jednostavna arhitektura s samo 4 skripta.
+RAG (Retrieval-Augmented Generation) chatbot koji koristi multilingvalni embedding model i Google Gemini za generiranje odgovora. Izuzetno jednostavna arhitektura s samo 4 skripta.
 
 ## 📋 Funkcionalnosti
 
 - ✅ Učitavanje PDF dokumenata i ekstrakcija teksta
 - ✅ Automatsko chunking s preklapanjem
-- ✅ Gemini embeddings (text-embedding-004)
+- ✅ Multilingvalni embeddings (Sentence Transformers) - podrška za hrvatski
 - ✅ ChromaDB vektorska baza
 - ✅ Similarity search za pronalaženje relevantnog konteksta
 - ✅ Gemini za generiranje odgovora na hrvatskom
@@ -82,13 +82,18 @@ Odgovor:
 
 | Parametar | Opis | Default |
 |-----------|------|---------|
-| `GEMINI_API_KEY` | Google Gemini API ključ | - |
-| `GEMINI_MODEL` | Gemini model | `gemini-1.5-flash` |
+| `GEMINI_API_KEY` | Google Gemini API ključ (za odgovore) | - |
+| `GEMINI_MODEL` | Gemini model (za odgovore) | `gemini-1.5-flash` |
+| `EMBEDDING_MODEL` | Multilingvalni embedding model | `paraphrase-multilingual-MiniLM-L12-v2` |
 | `PDF_FOLDER_PATH` | Putanja do PDFova | `./pdfs` |
 | `CHROMA_DB_PATH` | Putanja do DB | `./chroma_db` |
 | `CHUNK_SIZE` | Veličina chunka | `1000` |
 | `CHUNK_OVERLAP` | Preklapanje | `200` |
 | `TOP_K` | Broj rezultata | `3` |
+
+**Dostupni embedding modeli:**
+- `paraphrase-multilingual-MiniLM-L12-v2` (brz, efikasan - preporučeno)
+- `paraphrase-multilingual-mpnet-base-v2` (veći, precizniji)
 
 **Dobivanje API ključa:** https://makersuite.google.com/app/apikey
 
@@ -108,7 +113,13 @@ ChatbotPoslovna/
 
 ## ⚙️ Kako radi
 
-1. **setup.py** - Učitava PDFove, dijeli na chunkove, embeduje i sprema u ChromaDB
+**Flow:**
+```
+Parsing → Chunking → Embedding (multilingual model) → ChromaDB
+User prompt → Embedding → Similarity search → Context → Gemini → Response
+```
+
+1. **setup.py** - Učitava PDFove, dijeli na chunkove, embeduje (Sentence Transformers) i sprema u ChromaDB
 2. **rag_model.py** - Provodi similarity search i generira odgovore s Geminijem
 3. **api.py** - Izlaže `respond()` funkciju preko POST `/chat` endpointa
 4. **app.py** - Streamlit sučelje koje koristi RAGModel
@@ -133,7 +144,8 @@ python setup.py  # Automatski briše staru bazu i kreira novu
 
 ## 📝 Napomene
 
-- **Gemini**: Koristi se za embeddings (text-embedding-004) i generiranje odgovora (gemini-1.5-flash)
+- **Embeddings**: Sentence Transformers multilingvalni model (podrška za hrvatski i 50+ jezika)
+- **LLM**: Gemini gemini-1.5-flash za generiranje odgovora
 - **Bez kompleksnosti**: Samo 4 skripta, jednostavna arhitektura
 - **Hrvatski**: Odgovori optimizirani za hrvatski jezik
 - **Primjeri**: 3 PDF dokumenta uključena (tvrtka, proizvodi, politike)

@@ -30,12 +30,12 @@ ChatbotPoslovna/
 - ✅ Učitava sve PDF dokumente iz `pdfs/` direktorija
 - ✅ Ekstraktira tekst po stranicama (pypdf)
 - ✅ Dijeli tekst u chunk-ove (1000 chars, overlap 200)
-- ✅ Generira embeddings za svaki chunk (Gemini text-embedding-004)
+- ✅ Generira embeddings za svaki chunk (Sentence Transformers - multilingvalni)
 - ✅ Sprema u ChromaDB s metadataom (filename, page)
 
 ### 2. rag_model.py - RAG Logika
 - ✅ `RAGModel` klasa s `respond()` metodom
-- ✅ Embedding korisničkog upita (Gemini)
+- ✅ Embedding korisničkog upita (Sentence Transformers)
 - ✅ Similarity search u ChromaDB (cosine similarity, top_k)
 - ✅ Sastavlja prompt s kontekstom iz dokumenata
 - ✅ Generira odgovor (Gemini gemini-1.5-flash)
@@ -61,7 +61,8 @@ ChatbotPoslovna/
 
 | Paket | Verzija | Svrha |
 |-------|---------|-------|
-| google-generativeai | 0.8.3 | Gemini API (embeddings + LLM) |
+| sentence-transformers | 3.0.1 | Multilingvalni embeddings |
+| google-generativeai | 0.8.3 | Gemini API (LLM) |
 | chromadb | 0.5.23 | Vektorska baza |
 | fastapi | 0.115.12 | REST API |
 | streamlit | 1.41.1 | Web UI |
@@ -73,10 +74,10 @@ ChatbotPoslovna/
 
 ```
 1. SETUP (jednom):
-   PDFs → Chunk → Gemini Embeddings → ChromaDB
+   PDFs → Chunk → Sentence Transformers Embeddings → ChromaDB
 
 2. QUERY (runtime):
-   User pitanje → Gemini Embedding → ChromaDB Search (top 3) 
+   User pitanje → Sentence Transformers Embedding → ChromaDB Search (top 3) 
    → Kontekst → Gemini Prompt → Odgovor + Izvori
 ```
 
