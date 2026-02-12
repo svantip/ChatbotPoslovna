@@ -93,7 +93,7 @@ class RAGModel:
         
         context = "\n\n".join(context_parts)
         
-        # Step 4: Create prompt for Gemini
+        # Step 3: Create prompt for Gemini
         prompt = f"""Ti si pomoćnik koji odgovara na pitanja na temelju dostavljenog konteksta.
 
 Kontekst iz dokumenata:
@@ -105,7 +105,7 @@ Molim te odgovori na pitanje koristeći informacije iz konteksta. Odgovori na hr
 Ako informacija nije u kontekstu, jasno to naznači.
 """
         
-        # Step 5: Generate response with Gemini
+        # Step 4: Generate response with Gemini
         try:
             response = self.model.generate_content(prompt)
             return {
