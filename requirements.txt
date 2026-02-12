@@ -1,0 +1,17 @@
+# Core dependencies
+fastapi==0.115.12
+uvicorn==0.34.0
+python-dotenv==1.0.1
+streamlit==1.41.1
+
+# PDF processing
+pypdf==5.1.0
+
+# Google Gemini (for response generation only)
+google-generativeai==0.8.3
+
+# Embeddings - multilingual model
+sentence-transformers==3.0.1
+
+# Vector database
+chromadb==0.5.23
