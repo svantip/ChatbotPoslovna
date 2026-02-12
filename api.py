@@ -1,6 +1,5 @@
 """
-Script 3: API - Expose RAG model via FastAPI POST endpoint.
-Run with: python api.py or uvicorn api:app --reload
+API - Expose RAG model via FastAPI POST endpoint.
 """
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -48,7 +47,7 @@ class ChatResponse(BaseModel):
 def root():
     """Root endpoint."""
     return {
-        "message": "RAG Chatbot API - Poslovni Asistent",
+        "message": "RAG Chatbot API",
         "version": "1.0.0",
         "endpoint": "/chat"
     }
@@ -58,13 +57,13 @@ def root():
 def chat(request: ChatRequest):
     """
     Chat endpoint - POST method.
-    
+
     Body:
     {
         "prompt": "Your question here",
         "top_k": 3  // optional
     }
-    
+
     Returns:
     {
         "response": "Answer from Gemini",
@@ -76,10 +75,10 @@ def chat(request: ChatRequest):
             status_code=503,
             detail="RAG model not initialized. Check setup and environment."
         )
-    
+
     if not request.prompt.strip():
         raise HTTPException(status_code=400, detail="Prompt cannot be empty")
-    
+
     try:
         result = rag_model.respond(request.prompt, top_k=request.top_k)
         return ChatResponse(
@@ -95,7 +94,7 @@ def health():
     """Health check endpoint."""
     if rag_model is None:
         return {"status": "unhealthy", "message": "RAG model not initialized"}
-    
+
     doc_count = rag_model.collection.count()
     return {
         "status": "healthy",
@@ -112,5 +111,5 @@ if __name__ == "__main__":
     print("API Documentation: http://localhost:8000/docs")
     print("Health Check: http://localhost:8000/health")
     print("=" * 60 + "\n")
-    
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

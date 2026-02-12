@@ -1,6 +1,5 @@
 """
-Script 4: Streamlit UI - User interface for the chatbot.
-Run with: streamlit run app.py
+Streamlit UI - User interface for the chatbot.
 """
 import streamlit as st
 from rag_model import RAGModel
@@ -41,7 +40,8 @@ def main():
     # Show database info
     doc_count = rag_model.collection.count()
     st.sidebar.success(f"✓ Inicijalizirano")
-    st.sidebar.info(f"📚 Dokumenata u bazi: {doc_count}")
+    st.sidebar.info(f"📚 Kontekst 3 dokumenta")
+    st.sidebar.info(f"📄 Ukupno chunkova: {doc_count}")
 
     # Chat interface
     st.markdown("---")
@@ -76,7 +76,15 @@ def main():
 
             if result["sources"]:
                 with st.expander("📄 Izvori"):
-                    for source in result["sources"]:
+                    unique = []
+                    seen = set()
+                    for s in result["sources"]:
+                        key = (s.get("filename"), s.get("page"))
+                        if key not in seen:
+                            seen.add(key)
+                            unique.append(s)
+
+                    for source in unique:
                         st.write(
                             f"• {source['filename']}, stranica {source['page']}")
 

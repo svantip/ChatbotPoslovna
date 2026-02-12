@@ -1,6 +1,5 @@
 """
-Script 1: Setup - Parse PDFs, chunk text, embed, and store in database.
-Run this once to index all your PDF documents.
+Setup - Parse PDFs, chunk text, embed, and store in database.
 """
 import os
 from pypdf import PdfReader
